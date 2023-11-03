@@ -1,0 +1,3 @@
+[submodule "apdu_utils"]
+	path = apdu_utils
+	url = git@github.com:HotelSierraWhiskey/apdu_utils.git
