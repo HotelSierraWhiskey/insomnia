@@ -4,17 +4,10 @@ from collections import deque
 
 
 class Auth:
-    def __init__(self, key, auth_type: str):
-        self.engine = None
-        self.index = None
-        if auth_type == "AES":
-            self.engine = AES
-            self.index = 16
-        if auth_type == "DES":
-            self.engine = DES
-            self.index = 8
+    engines = {"AES": (AES, 16), "DES": (DES, 8)}
 
-        assert self.engine and self.index
+    def __init__(self, key, encryption: str):
+        self.engine, self.index = self.engines[encryption]
 
         self.key = key
         self.iv = None
@@ -25,10 +18,6 @@ class Auth:
         self.authenticated = False
 
     def authenticate(self, ciphertext: list) -> list:
-        """
-        Internal use only.
-        Performs an external authentication procedure.
-        """
         ciphertext = bytearray(ciphertext)
         self.iv = bytearray([0x00] * self.index)
         self.cipher = self.engine.new(self.key, self.engine.MODE_CBC, iv=self.iv)
@@ -46,12 +35,6 @@ class Auth:
         return result
 
     def get_session_key(self, ciphertext: list) -> None:
-        """
-        Internal use only.
-        Decrypt last response. If it matches the original `random_a` (rotated one byte left),
-        the reader knows the card has the same self.engine key.
-        It assumes that external_authentication has already been called.
-        """
         cipher = self.engine.new(self.key, self.engine.MODE_CBC, iv=self.iv)
         ciphertext = bytearray(ciphertext)
         result = cipher.decrypt(ciphertext)

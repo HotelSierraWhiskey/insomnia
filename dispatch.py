@@ -1,4 +1,5 @@
 from apdu_utils.response_codes import apdu_response_codes
+from smartcard.util import toHexString
 
 
 class Response:
@@ -8,6 +9,15 @@ class Response:
 
     def is_successful(self):
         return self.status in [(0x91, 0x00), (0x90, 0x00), (0x91, 0xAF)]
+
+    def to_bytes(self):
+        return bytearray(self.data)
+
+    def to_string(self):
+        return self.to_bytes().decode("utf-8")
+
+    def to_hex_string(self, *args, **kwargs):
+        return toHexString(self.data, *args, **kwargs)
 
     @property
     def response_code(self) -> str:
