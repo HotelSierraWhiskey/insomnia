@@ -2,4 +2,4 @@ __pycache__
 .venv
 .vscode
 scratch.py
-*txt
+notes.txt
