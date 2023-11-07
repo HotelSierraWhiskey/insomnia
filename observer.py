@@ -9,25 +9,30 @@ from functools import partial
 
 
 class Observer(CardObserver):
-    def __init__(self, callback=None):
+    def __init__(self, callback=None, event_callback=None):
         self.callback = callback
+        self.event_callback = event_callback
         card_type = ATRCardType(toBytes(config.card_atr))
         card_request = CardRequest(timeout=config.timeout, cardType=card_type)
-        self.service = card_request.waitforcard()
-        self.service.connection.connect()
+        self.result = None
+
+        try:
+            self.service = card_request.waitforcard()
+            self.service.connection.connect()
+        except (CardRequestTimeoutException, CardConnectionException) as e:
+            if config.debug:
+                config.writer(e)
+            return None
 
     def update(self, _, handlers):
-        added, removed = handlers
-        try:
-            if added:
-                if config.debug:
-                    config.writer("--- Enter ---")
+        added, _ = handlers
+        if added:
+            try:
                 send = partial(dispatch, service=self.service)
-                self.callback(send=send)
+                self.result = self.callback(send=send)
                 self.service.connection.disconnect()
-            if removed:
+                self.event_callback(self.result)
+            except CardConnectionException as e:
                 if config.debug:
-                    config.writer("--- Exit ---")
-
-        except (CardRequestTimeoutException, CardConnectionException) as e:
-            config.writer(e)
+                    config.writer(e)
+                return None
