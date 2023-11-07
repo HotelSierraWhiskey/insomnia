@@ -18,4 +18,5 @@ class card_task(CardMonitor):
         func = partial(self._func, *args, **kwargs)
         observer = Observer(func, self.event_callback)
         self.addObserver(observer)
+        self.deleteObserver(observer)
         return observer.result
