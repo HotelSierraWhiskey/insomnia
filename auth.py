@@ -15,7 +15,6 @@ class Auth:
         self.random_a = None
         self.random_b = None
         self.session_key = None
-        self.authenticated = False
 
     def authenticate(self, ciphertext: list) -> list:
         ciphertext = bytearray(ciphertext)
@@ -36,12 +35,10 @@ class Auth:
 
     def get_session_key(self, ciphertext: list) -> None:
         cipher = self.engine.new(self.key, self.engine.MODE_CBC, iv=self.iv)
-        ciphertext = bytearray(ciphertext)
-        result = cipher.decrypt(ciphertext)
+        result = cipher.decrypt(bytearray(ciphertext))
         check = deque(self.random_a)
         check.rotate(-1)
-        self.authenticated = list(check) == list(result)
-        if self.authenticated:
+        if list(check) == list(result):
             if self.engine == AES:
                 part_1 = list(self.random_a[:4]) + list(self.random_b[:4])
                 part_2 = list(self.random_a[-4:]) + list(self.random_b[-4:])
