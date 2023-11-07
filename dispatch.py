@@ -1,4 +1,4 @@
-from apdu_utils.response_codes import apdu_response_codes
+from .apdu_utils.response_codes import apdu_response_codes
 from smartcard.util import toHexString
 
 
