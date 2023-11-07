@@ -1,18 +1,21 @@
 from smartcard.CardMonitoring import CardMonitor
-from .config import config
 from .observer import Observer
 from functools import partial
-from time import sleep
+import threading
 
 
 class card_task(CardMonitor):
-    def __init__(self, func, timeout: float = config.timeout):
+    def __init__(self, func):
         super().__init__()
         self._func = func
-        self.timeout = timeout
+        self.scan_event = threading.Event()
+
+    def event_callback(self, result):
+        self.observer_result = result
+        self.scan_event.set()
 
     def __call__(self, *args, **kwargs):
         func = partial(self._func, *args, **kwargs)
-        observer = Observer(func)
+        observer = Observer(func, self.event_callback)
         self.addObserver(observer)
-        sleep(self.timeout)
+        return observer.result
