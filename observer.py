@@ -20,12 +20,14 @@ class Observer(CardObserver):
         added, removed = handlers
         try:
             if added:
-                config.writer("--- Enter ---") if config.debug else None
+                if config.debug:
+                    config.writer("--- Enter ---")
                 send = partial(dispatch, service=self.service)
                 self.callback(send=send)
                 self.service.connection.disconnect()
             if removed:
-                config.writer("--- Exit ---")
+                if config.debug:
+                    config.writer("--- Exit ---")
 
         except (CardRequestTimeoutException, CardConnectionException) as e:
             config.writer(e)
