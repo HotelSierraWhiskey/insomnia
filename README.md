@@ -14,5 +14,5 @@ from insomnia.apdu_utils.application_commands import command_select_application
 def check_application(application_id, **kwargs):
     send = kwargs.get("send")
     response = send(command_select_application(application_id))
-    # do something with response
+    return response
 ```
