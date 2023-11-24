@@ -5,9 +5,9 @@ import threading
 
 
 class Insomnia(CardMonitor):
-    def __init__(self, config=None):
+    def __init__(self, auth=None):
         super().__init__()
-        self.config = config
+        self.auth = auth
         self.scan_event = threading.Event()
 
     def threading_event_callback(self, result):
@@ -15,8 +15,12 @@ class Insomnia(CardMonitor):
         self.scan_event.set()
 
     def basic(self, *args, **kwargs):
+        """
+        For basic card operations that do not require authentication
+        """
+
         def decorator(func):
-            def wrapper():
+            def wrapper(*args, **kwargs):
                 callback = partial(func, *args, **kwargs)
                 observer = Observer(
                     callback=callback, threading_event=self.threading_event_callback
@@ -30,12 +34,16 @@ class Insomnia(CardMonitor):
         return decorator
 
     def authenticate(self, *args, **kwargs):
+        """
+        Pre-authenticates cards configured for either AES or DES
+        """
+
         def decorator(func):
-            def wrapper():
+            def wrapper(*args, **kwargs):
                 callback = partial(func, *args, **kwargs)
                 observer = Observer(
                     callback=callback,
-                    auth=self.config,
+                    auth=self.auth,
                     threading_event=self.threading_event_callback,
                 )
                 self.addObserver(observer)

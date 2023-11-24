@@ -5,7 +5,7 @@ from smartcard.CardRequest import CardRequest
 from smartcard.Exceptions import CardRequestTimeoutException, CardConnectionException
 from .config import config
 from .dispatch import dispatch
-from .auth import Auth
+from .auth import Auth, DEFAULT_DES_KEY
 from .apdu_utils.security_commands import *
 from .apdu_utils.application_commands import *
 from functools import partial
@@ -44,13 +44,28 @@ class Observer(CardObserver):
                 return None
 
     def pre_auth(self) -> list | None:
+        """
+        If an authentication configuration is provided, this will attempt to auth with AES,
+        If that doesn't work, the Observer will assume you're trying to authenticate a factory-fresh card,
+        in which case it will try to auth with the default DES key (eight bytes of zero with key id zero)
+        """
         if not self.auth:
             return None
         try:
-            key = self.auth["key"]
-            key_number = self.auth["key_number"]
-            response = self.send(command_aes_auth(key_number))
+            key = self.auth["MASTER_KEY"]
+            key_number = self.auth["MASTER_KEY_NUMBER"]
             authenticator = Auth(bytearray(key), "AES")
+            response = self.send(command_aes_auth(key_number))
+
+            if not response.is_successful():
+                authenticator = Auth(bytearray(DEFAULT_DES_KEY), "DES")
+                response = self.send(command_des_auth([0x00]))
+                if not response.is_successful():
+                    if config.debug:
+                        config.writer(
+                            f"Could not authenticate: {response.response_code}. Double check your key number."
+                        )
+
             submission = authenticator.authenticate(response.data)
             response = self.send(command_additional_frame(submission))
             session_key = authenticator.get_session_key(response.data)

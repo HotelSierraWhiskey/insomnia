@@ -3,6 +3,10 @@ import numpy as np
 from collections import deque
 
 
+DEFAULT_AES_KEY = [0x00] * 16
+DEFAULT_DES_KEY = [0x00] * 8
+
+
 class Auth:
     engines = {"AES": (AES, 16), "DES": (DES, 8)}
 
